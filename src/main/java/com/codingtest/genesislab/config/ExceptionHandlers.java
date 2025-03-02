@@ -37,7 +37,12 @@ public class ExceptionHandlers {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Object> handleHttpMessageNotReadableException(final HttpMessageNotReadableException ex) {
         preHandle(ex);
-        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, ex.getMessage());
+        String message = "입력값이 올바르지 않습니다.";
+        Throwable cause = ex.getCause().getCause();
+        if (cause instanceof IllegalArgumentException ife) {
+            message = ife.getMessage();
+        }
+        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, message);
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
