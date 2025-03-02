@@ -1,15 +1,19 @@
 package com.codingtest.genesislab.config;
 
-import com.codingtest.genesislab.auth.CustomUnauthorizedException;
+import com.codingtest.genesislab.auth.token.InvalidateTokenException;
 import com.codingtest.genesislab.file.StorageException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSourceResolvable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -145,9 +149,9 @@ public class ExceptionHandlers {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(CustomUnauthorizedException.class)
+    @ExceptionHandler(InvalidateTokenException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<Object> handleCustomUnauthorizedException(CustomUnauthorizedException ex) {
+    public ResponseEntity<Object> handleCustomUnauthorizedException(InvalidateTokenException ex) {
         preHandle(ex);
         ErrorResponse errorResponse = ErrorResponse.of(UNAUTHORIZED);
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
@@ -165,6 +169,36 @@ public class ExceptionHandlers {
     public ResponseEntity<Object> handleStorageException(StorageException ex) {
         preHandle(ex);
         ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<Object> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        preHandle(ex);
+        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentialsException(BadCredentialsException ex) {
+        preHandle(ex);
+        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<Object> handleJwtException(JwtException ex) {
+        preHandle(ex);
+        String message = "인증이 실패했습니다.";
+        ErrorResponse errorResponse = ErrorResponse.of(UNAUTHORIZED, message);
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        preHandle(ex);
+        String message = "데이터를 다시 확인하세요.";
+        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, message);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
