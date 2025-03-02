@@ -1,9 +1,11 @@
 package com.codingtest.genesislab.config;
 
 import com.codingtest.genesislab.auth.CustomUnauthorizedException;
+import com.codingtest.genesislab.file.StorageException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,14 +18,17 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.lang.reflect.InvocationTargetException;
 
 import static com.codingtest.genesislab.config.ApiResponseCodes.*;
-
 @Slf4j
 @RestControllerAdvice
 public class ExceptionHandlers {
+
+    @Value("${video.max.upload.size:104857600}")
+    private long fileUploadMaxSize;
 
     @ExceptionHandler({Exception.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -148,6 +153,20 @@ public class ExceptionHandlers {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> handleMaxSizeException(MaxUploadSizeExceededException ex) {
+        preHandle(ex);
+        String message = "파일 크기가 " + (fileUploadMaxSize / 1024 / 1024) + "MB를 초과했습니다.";
+        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, message);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<Object> handleStorageException(StorageException ex) {
+        preHandle(ex);
+        ErrorResponse errorResponse = ErrorResponse.of(BAD_REQUEST, ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 
     public void preHandle(final Exception ex) {
         log.error("### message={}, cause={}", ex.getMessage(), ex.getCause(), ex);
