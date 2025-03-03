@@ -45,8 +45,8 @@ public class VideoService {
      * 비디오 업로드
      */
     public VideoInfoDto uploadVideo(MultipartFile file, VideoUploadDto dto) {
-        User currentUser = getCurrentUser();
 
+        User currentUser = getCurrentUser();
         if (!currentUser.getRole().equals(Role.USER)) {
             throw new IllegalArgumentException("비디오는 USER 회원만이 등록 가능합니다.");
         }

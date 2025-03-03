@@ -116,9 +116,16 @@ public class UserService {
      * @param roleUpdateDto 권한 업데이트 정보
      * @return 업데이트된 사용자 정보 DTO
      * @throws EntityNotFoundException 사용자가 존재하지 않거나 삭제된 경우
+     * @throws SecurityException 일반 사용자가 권한 업데이트를 시도할 경우
+     *
      */
     public UserCurrentInfoDto updateUserRole(Long userId, UserRoleUpdateDto roleUpdateDto) {
-        validateUserPermission(userId);
+
+        User currentUser = getCurrentUser();
+        if(currentUser.getRole().equals(Role.ADMIN)) {
+            throw new SecurityException("권한 업데이트는 운영자만 가능합니다.");
+        }
+
         User user = findUserByIdAndNotDeleted(userId);
         user.updateRole(roleUpdateDto.getRole());
         return userMapper.toCurrentInfoDto(user);
