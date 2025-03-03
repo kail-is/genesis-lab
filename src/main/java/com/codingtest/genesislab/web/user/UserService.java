@@ -9,11 +9,13 @@ import com.codingtest.genesislab.web.user.in.UserUpdateDto;
 import com.codingtest.genesislab.web.user.in.UserRoleUpdateDto;
 import com.codingtest.genesislab.web.user.in.UserPasswordUpdateDto;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import static com.codingtest.genesislab.auth.token.TokenService.getCurrentUser;
 
 @Service
 @Transactional
@@ -90,8 +92,9 @@ public class UserService {
      * @throws IllegalArgumentException 이메일이 이미 사용 중인 경우
      */
     public UserCurrentInfoDto updateUser(Long userId, UserUpdateDto updateDto) {
-        User user = findUserByIdAndNotDeleted(userId);
+        validateUserPermission(userId);
 
+        User user = findUserByIdAndNotDeleted(userId);
         if (!user.getEmail().equals(updateDto.getEmail()) &&
                 userRepository.existsByEmailAndDeletedFalse(updateDto.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
@@ -115,6 +118,7 @@ public class UserService {
      * @throws EntityNotFoundException 사용자가 존재하지 않거나 삭제된 경우
      */
     public UserCurrentInfoDto updateUserRole(Long userId, UserRoleUpdateDto roleUpdateDto) {
+        validateUserPermission(userId);
         User user = findUserByIdAndNotDeleted(userId);
         user.updateRole(roleUpdateDto.getRole());
         return userMapper.toCurrentInfoDto(user);
@@ -129,6 +133,7 @@ public class UserService {
      * @throws IllegalArgumentException 현재 비밀번호가 일치하지 않거나 새 비밀번호가 유효하지 않은 경우
      */
     public void updateUserPassword(Long userId, UserPasswordUpdateDto passwordUpdateDto) {
+        validateUserPermission(userId);
         User user = findUserByIdAndNotDeleted(userId);
 
         if (!passwordEncoder.matches(passwordUpdateDto.getCurrentPassword(), user.getPassword())) {
@@ -143,11 +148,12 @@ public class UserService {
      * 사용자를 논리적으로 삭제합니다.
      *
      * @param userId 삭제할 사용자 ID
+     * @throws AccessDeniedException 현재 사용자가 해당 계정을 삭제할 권한이 없는 경우
      * @throws EntityNotFoundException 사용자가 존재하지 않거나 이미 삭제된 경우
      */
     public void deleteUser(Long userId) {
-        User user = findUserByIdAndNotDeleted(userId);
-        user.delete();
+        validateUserPermission(userId);
+        findUserByIdAndNotDeleted(userId).delete();
     }
 
     /**
@@ -161,4 +167,18 @@ public class UserService {
         return userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
     }
+
+    /**
+     * 현재 사용자가 주어진 사용자 ID에 대한 권한이 있는지 검증합니다.
+     *
+     * @param userId 검증할 사용자 ID
+     * @throws AccessDeniedException 권한이 없을 경우 발생
+     */
+    private void validateUserPermission(Long userId) {
+        User currentUser = getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("회원 권한이 없습니다.");
+        }
+    }
+
 }

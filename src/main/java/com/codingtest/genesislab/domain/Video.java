@@ -3,7 +3,6 @@ package com.codingtest.genesislab.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.mapstruct.Builder;
 
 import java.time.LocalDateTime;
 
@@ -38,8 +37,12 @@ public class Video {
     @Column(name = "UPLOAD_DATE", nullable = false)
     private LocalDateTime uploadDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "UPLOADER_ID", nullable = false)
+    private User uploader;
+
     public Video(String originalTitle, String storedTitle, String description, String filePath,
-                 String contentType, long fileSize, LocalDateTime uploadDate) {
+                 String contentType, long fileSize, LocalDateTime uploadDate, User uploader) {
         this.originalTitle = originalTitle;
         this.storedTitle = storedTitle;
         this.description = description;
@@ -47,12 +50,11 @@ public class Video {
         this.contentType = contentType;
         this.fileSize = fileSize;
         this.uploadDate = uploadDate;
+        this.uploader = uploader;
     }
-
 
     public static Video of(String originalTitle, String storedTitle, String description, String filePath,
-                           String contentType, long fileSize, LocalDateTime uploadDate) {
-        return new Video(originalTitle, storedTitle, description, filePath, contentType, fileSize, uploadDate);
+                           String contentType, long fileSize, LocalDateTime uploadDate, User uploader) {
+        return new Video(originalTitle, storedTitle, description, filePath, contentType, fileSize, uploadDate, uploader);
     }
-
 }
