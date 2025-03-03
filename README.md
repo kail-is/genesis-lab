@@ -3,6 +3,16 @@
 - 지원자: [서은빈](https://artesuh.notion.site/13ce1ea9c27980238bc1c53277f3a647?pvs=4)
 - Java 17 / Spring Boot 3.4.3 / Spring Data JPA (MySQL) / Spring Security 6 
 - 구동 시 `DDL auto` 설정: 빠른 테스트 가능하시도록 설정해 두었습니다.
+  - hr
+  - username: root
+  - password: 1234
+```MySQL
+CREATE DATABASE hr;
+ALTER USER 'root'@'%' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON hr.* TO 'root'@'%';
+FLUSH PRIVILEGES;
+
+```
 - [Swagger](http://localhost:8080/swagger-ui/index.html)를 통한 조회가 가능합니다.
   - `상단 Authorize` 내 `Bearer 없이 토큰 지정` 후 테스트가 가능합니다.
 
